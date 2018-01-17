@@ -1,0 +1,9 @@
+---
+- hosts: database
+  gather_facts: no
+  become: yes
+  tasks:
+  - name: INSTALL HTTPD
+    yum:
+     name: httpd
+     state: absent  

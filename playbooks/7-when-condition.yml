@@ -1,0 +1,9 @@
+---
+- hosts: database
+  become: true
+  tasks:
+  - name: IF OS is REDHAT INSTALL HTTPD
+    yum: 
+     name: httpd
+     state: latest
+    when: ansible_os_family=="RedHat"

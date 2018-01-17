@@ -1,0 +1,22 @@
+---
+-  hosts: database
+   become: yes
+   tasks:
+   - name: INSTALL MYSQL SERVER
+     yum: 
+      name: mysql-server
+      state: latest
+     ignore_errors: yes
+     register: there
+     tags: 
+     - packages
+
+
+   - name: START MYSQL SERVER
+     service:
+      name: mysqld
+      state: started
+     register: running
+   - debug: msg="stdout={{ running }}"
+     tags:
+     - startup

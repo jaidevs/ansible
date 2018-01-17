@@ -1,0 +1,5 @@
+---
+- hosts: single
+  become: yes
+  roles:
+    - ansible-mysql-master

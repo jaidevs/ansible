@@ -1,0 +1,25 @@
+---
+- hosts: database
+  become: yes
+  tasks:
+  - name: INSTALL HTTPD
+    yum:
+     name: httpd
+     state: latest  
+
+  - name: CREATE INDEX.HTML
+    file:
+      state: touch
+      path: /var/www/html/index.html
+
+  - name: ADDING CONTENT
+    lineinfile:
+      state: present
+      dest: /var/www/html/index.html
+      line: Hostname={{ ansible_hostname }}
+
+  - name: RESTART HTTPD
+    service:
+      name: httpd
+      state: reloaded
+      enabled: yes

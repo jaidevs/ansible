@@ -1,0 +1,74 @@
+---
+- hosts: database
+  become: yes
+  vars_prompt:
+    - name: "username"
+      prompt: "Enter username"
+      private: no
+
+    - name: "password"
+      prompt: "Enter Password for db and ssh"
+      private: no
+
+    - name: "websiteURL"
+      prompt: "Enter website URL"
+      private: no
+
+  tasks:
+    - name: Creates directory
+      file:
+        path: /mnt/md0/staging-sites/{{username}}
+        state: directory
+        mode: 0755
+
+    - name: create user
+      user:
+        name: "{{username}}"
+        home: /mnt/md0/staging-sites/{{username}}
+        password: "{{ password | password_hash('sha512') }}"
+        shell: /bin/bash
+
+
+    - name: create public_html
+      file: 
+        path: /mnt/md0/staging-sites/{{username}}/public_html
+        state: directory
+        mode: 0755
+
+    - name: change permissions
+      command: /usr/bin/chown -R {{username}}:{{username}} /mnt/md0/staging-sites/{{username}}
+      
+
+    - name: Create db
+      mysql_db:
+        name: "{{ username }}"
+        login_user: root
+        state: present
+
+    - name: Create wordpress user
+      mysql_user:
+         name:     "{{ username }}"
+         password: "{{ password }}"
+         priv:     "{{ username }}.*:ALL"
+         login_user: root
+         state: present
+
+
+    - name: add virtualhost entries
+      blockinfile:
+         path: /etc/httpd/conf/httpd.conf
+         block: |
+           <VirtualHost *:80>
+           Servername {{websiteURL}}
+           DocumentRoot /mnt/md0/staging-sites/{{username}}/public_html
+           </VirtualHost>
+
+    - name: restart apache
+      service:
+         name: httpd
+         state: restarted
+ 
+    - debug: msg="username={{username}}"
+    - debug: msg="ssh/db password={{password}}"
+    - debug: msg="url={{websiteURL}}"
+

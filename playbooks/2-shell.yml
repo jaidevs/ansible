@@ -1,0 +1,5 @@
+---
+- hosts: all
+  tasks:
+  - name: Data into File 
+    shell: echo "testing" > /home/ansible/testfile

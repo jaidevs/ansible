@@ -1,0 +1,17 @@
+---
+- hosts: database
+  become: yes
+  tasks:
+   - name: INSTALL MYSQL
+     yum: 
+      name: mysql-server 
+      state: present
+     ignore_errors: yes
+     register: there
+   - debug: msg="stdout={{ there }}" 
+   - name: SERVICE MYSQL STATUS
+     service: 
+      name: mysqld
+      state: started
+     register: running
+   - debug: msg="stdout={{ running }}"

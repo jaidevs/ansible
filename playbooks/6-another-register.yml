@@ -1,0 +1,20 @@
+---
+- hosts: database
+  tasks:
+  - name: UPLOAD FILE ON TARGET
+    copy:
+     src: /opt/program.sh
+     dest: /home/ansible/program.sh
+     mode: 0755
+
+  - name: IF LINE IS NOT THERE THEN ADD IT
+    lineinfile:
+     state: present
+     dest: /home/ansible/program.sh
+     regexp: '^HOSTNAME='
+     line: HOSTNAME={{ ansible_hostname }}
+
+  - name: RUN THE PROGRAM
+    shell: /home/ansible/program.sh
+    register: program_output
+  - debug: msg="stdout={{ program_output }}"

@@ -1,0 +1,24 @@
+---
+- hosts: database
+  become: yes
+  vars_prompt:
+    - name: "username"
+      prompt: "Enter username"
+      private: no
+
+    - name: "password"
+      prompt: "Enter Password for db and ssh"
+      private: no
+  
+    - name: "websiteURL"
+      prompt: "Enter website URL"
+      private: no
+
+  tasks:
+    - debug: msg="username={{username}}"
+    - debug: msg="ssh/db password={{password}}"
+    - debug: msg="url={{websiteURL}}"
+
+
+
+

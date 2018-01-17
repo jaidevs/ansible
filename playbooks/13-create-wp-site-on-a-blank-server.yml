@@ -1,0 +1,82 @@
+---
+- hosts: database
+  become: yes
+  vars:
+   username: wordpress
+   database: wordpress
+   password: $7RrWmZlhr
+  tasks: 
+   - name: install mysql packages
+     yum:
+      name: "{{item}}"
+      state: latest
+     with_items:
+       - mariadb-server
+       - MySQL-python
+ 
+   
+   - name: start mariadb service
+     service:
+       name: mariadb
+       state: started
+
+   - unarchive:
+       src: https://wordpress.org/latest.tar.gz
+       dest: /tmp/
+       remote_src: True
+
+
+   - name: install Apache
+     yum:
+      name: httpd
+      state: latest
+
+   - name: install php modules
+     yum: 
+      name: "{{item}}"
+      state: latest
+     with_items:
+        - php
+        - php-gd
+        - php-pear
+        - php-mysql 
+
+   - name: remove html folder from remote server
+     command: /usr/bin/rm -rf /var/www/html
+
+   - name: rename wordpress to html
+     command: /usr/bin/mv /tmp/wordpress /var/www/html
+ 
+   - name: restart service
+     service:
+      name: httpd
+      state: restarted
+
+
+   - name: copy template
+     template:
+       src: wp-config.php.j2
+       dest: /var/www/html/wp-config.php
+       owner: root
+       group: root
+       mode: 755
+
+   - name: change permissions
+     command: /usr/bin/chown -R root:root /var/www/html
+     command: /usr/bin/chmod -R 755 /var/www/html
+
+
+   - name: Create wordpress db
+     mysql_db:
+       name: "{{ database }}"
+       login_user: root
+       state: present
+
+   - name: Create wordpress user
+     mysql_user:
+        name:     "{{ username }}"
+        password: "{{ password }}"
+        priv:     "{{ database }}.*:ALL"
+        login_user: root
+        state: present
+

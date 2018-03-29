@@ -1,0 +1,77 @@
+---
+- hosts: all
+  gather_facts: yes
+  become: yes
+  vars:
+    MySQL_root_pass: admin123
+  tasks:
+  - name: INSTALL APACHE2
+    apt:
+     name: apache2
+     state: present 
+ 
+  - name: ENABLE APACHE MODULES
+    apache2_module:
+     name: rewrite
+     state: present
+
+  - name: INSTALL PYTHON SOFTWARE PACKAGE FOR PHP5.6
+    apt: 
+     name: python-software-properties
+    when: ansible_distribution_version == "14.04"
+
+  - name: ADD REPO FOR PHP INSTALLATION ON UBUNTU 14.04
+    apt_repository:
+     repo: ppa:ondrej/php
+     state: present
+    when: ansible_distribution_version == "14.04"
+
+  - name: INSTALL PHP ON UBUNTU 14.04
+    apt: 
+     name: "{{ item }}"
+    with_items:
+       - php5.6
+       - libapache2-mod-php5.6 
+       - php5.6-gd
+       - php5.6-mcrypt
+    when: ansible_distribution_version == "14.04"       
+
+  - name: INSTALL PHP ON UBUNTU 16.04
+    apt:
+     name: "{{ item }}"
+    with_items:
+       - php
+       - libapache2-mod-php
+       - php-gd 
+       - php-mcrypt
+    when: ansible_distribution_version == "16.04"
+
+
+
+  - name: Set MySQL root password before installing
+    debconf: name='mysql-server' question='mysql-server/root_password' value='{{MySQL_root_pass | quote}}' vtype='password'
+
+  - name: Confirm MySQL root password before installing
+    debconf: name='mysql-server' question='mysql-server/root_password_again' value='{{MySQL_root_pass | quote}}' vtype='password'
+
+  - name: Install MySQL
+    apt: package={{ item }} state=latest force=yes update_cache=yes cache_valid_time=3600
+    when: ansible_os_family == "Debian"
+    with_items:
+       - mysql-server
+       - mysql-client
+       - python-mysqldb
+
+  - name: Deletes anonymous MySQL server user for localhost
+    mysql_user: user="" state="absent" login_password="{{ MySQL_root_pass }}" login_user=root
+  
+  - name: Secures the MySQL root user
+    mysql_user: user="root" password="{{ MySQL_root_pass }}" host="{{ item }}" login_password="{{MySQL_root_pass}}" login_user=root
+    with_items:
+       - 127.0.0.1
+       - localhost
+       - ::1
+       - "{{ ansible_fqdn }}"
+
+  - name: Removes the MySQL test database
+    mysql_db: db=test state=absent login_password="{{ MySQL_root_pass }}" login_user=root
